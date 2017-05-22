@@ -27,7 +27,8 @@
       <template v-if="gameGoing">
         <button type="button" @click="gameGoing = false">Surrender</button>
         <button type="button" @click="makeDmg()">Attack</button>
-        <button type="button" @click="makeDmg({ superAttack: 1.5 })">Supper attack</button>
+        <button type="button" @click="makeDmg({ attackModifier: 1.5 })">Supper attack</button>
+        <button type="button" @click="makeDmg({ attackModifier: 0 })">Heal</button>
       </template>
     </div>
 
@@ -40,7 +41,7 @@
           { 'your-attack': action.side === 'player'}]
         "
       >
-        {{action.side}} atacked on {{action.dmg}} health</li>
+        {{action.side}} {{action.heal ? `healed on ${action.heal}` : `damaged on ${action.dmg}`}} health</li>
     </ul>
   </div>
 </template>
@@ -68,17 +69,23 @@ export default {
     getNumDmg(min = 1, max = 11) {
       return Math.floor(Math.random() * (max - min)) + min;
     },
-    attackDepression(superAttack) {
+    attackDepression(attackModifier) {
       const yourAttack = this.getNumDmg();
       const depAttack = this.getNumDmg();
 
-      this.depressionHealth -= yourAttack * superAttack;
-      this.actionList.push({ side: 'player', dmg: yourAttack });
+      if (!attackModifier) {
+        const yourHeal = yourAttack;
+        this.playerHealth += yourHeal;
+        this.actionList.push({ side: 'player', dmg: depAttack, heal: yourHeal });
+      } else {
+        this.depressionHealth -= yourAttack * attackModifier;
+        this.actionList.push({ side: 'player', dmg: yourAttack });
+      }
       this.playerHealth -= depAttack;
       this.actionList.push({ side: 'depression', dmg: depAttack });
     },
-    makeDmg({ superAttack } = { superAttack: 1 }) {
-      this.attackDepression(superAttack);
+    makeDmg({ attackModifier } = { attackModifier: 1 }) {
+      this.attackDepression(attackModifier);
       if (this.depressionHealth <= 0 && this.playerHealth <= 0) {
         alert('You and your depression fade away!');
         this.gameGoing = false;
